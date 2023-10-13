@@ -1,0 +1,457 @@
+import React, { useState, useEffect } from "react";
+import { Container, Row, Col, Form, Button, Card } from "react-bootstrap";
+//css
+import styles from "./CreatePlan.module.scss";
+//modal
+import PlanPreviewModal from "../../../components/common/modal/PlanPreviewModal";
+import PlanNavbar from "../PlanNavbar";
+import Sidebar from "../../../components/sidebar/Sidebar";
+import { useDispatch, useSelector } from "react-redux";
+import { createPlanAsync, getCouponsAsync } from "../../../redux/reducers/planReducer";
+import { RootState } from "../../../redux/store/rootReducer";
+import { Plan } from "../../../helper/Types";
+import { FormikProvider, Formik, Form as FormikForm, useFormik, Field, ErrorMessage } from "formik";
+import { planSchema } from "../../../helper/formValidation";
+import PayPal from "../../../components/common/modal/payment-gateway/PayPal";
+import CreditCard from "../../../components/common/modal/payment-gateway/CreditCard";
+import UPI from "../../../components/common/modal/payment-gateway/UPI";
+import OthersPayment from "../../../components/common/modal/payment-gateway/OthersPayment";
+import moment from "moment";
+
+const CreatePlan: React.FC = () => {
+  const { error, coupons } = useSelector((state: RootState) => state.plan);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("");
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const dispatch = useDispatch();
+  const initialFormData: Plan = {
+    planName: "",
+    planNumber: "",
+    createdAt: "",
+    planExpiration: "",
+    usageLimit: "",
+    features: "",
+    trialPeriod: "",
+    billingCycle: "",
+    codes: "",
+    planVisibility: "",
+    planDescription: "",
+    paymentOption: "",
+    planActivation: "",
+    pricing: "",
+    paymentGateway: "",
+    discountCouponCode: "", // Optional
+    duration: "",
+    planAnalytics: "",
+  };
+
+  useEffect(() => {
+    dispatch(getCouponsAsync() as never);
+  }, [dispatch])
+
+  const OpenModal = () => setModalOpen(true);
+  const HideModal = () => setModalOpen(false);
+  // Paypal
+  // const hidePayPal = () => setModalOpen(false);
+  // const OpenPayPal = () => setModalOpen(true);
+
+  const formik = useFormik({
+    initialValues: initialFormData,
+    validationSchema: planSchema,
+    onSubmit: (values) => {
+      dispatch(createPlanAsync(values) as never);
+      console.log("plan created successfully!", values);
+    },
+  });
+
+  // const handleSubmit =(values:Plan,{ resetForm })=>{
+  //   dispatch(createPlanAsync(values) as never);
+  //   resetForm();
+  // }
+
+  //handle payment method change
+  const handlePaymentMethodChange = (method: string) => {
+    setSelectedPaymentMethod(method);
+  };
+  const handlePaymentModalOpen = () => {
+    console.log("paypal");
+
+    setPaymentModalOpen(true);
+  };
+
+  const handlePaymentModalClose = () => {
+    setPaymentModalOpen(false);
+  };
+  return (
+    <Container fluid className="main position-relative">
+      <Row>
+        <Col sm={2} bg="light" className="d-none d-md-block col-auto">
+          <Sidebar />
+        </Col>
+        <Col sm={10} id="content" bg="dark" className="main">
+          <div style={{ width: "100%", margin: "auto", paddingTop: "1%" }}>
+            <Container>
+              <Row>
+                <Col>
+                  <PlanNavbar />
+                  <FormikProvider value={formik}>
+                    <Card className="m-2">
+                      <Formik
+                        initialValues={initialFormData}
+                        validationSchema={planSchema}
+                        onSubmit={(values, { resetForm }) => {
+                          dispatch(createPlanAsync(values) as never);
+                          resetForm();
+                        }}
+                      >
+                        {({ values, touched, errors }) => (
+                          <FormikForm className={styles.form_plan}>
+                            {/* Form Fields */}
+                            <Row className="mb-3">
+                              {/* Plan Name */}
+                              <Form.Group as={Col} controlId="planName">
+                                <Form.Label>Plan Name</Form.Label>
+                                <Field
+                                  type="text"
+                                  name="planName"
+                                  placeholder="Gold Plan"
+                                  className={`form-control ${touched.planName && errors.planName
+                                    ? "is-invalid"
+                                    : ""
+                                    }`}
+                                />
+                                <ErrorMessage
+                                  name="planName"
+                                  component="div"
+                                  className="text-danger"
+                                />
+                              </Form.Group>
+                              <Form.Group as={Col} controlId="pricing">
+                                <Form.Label>Pricing</Form.Label>
+                                <Field
+                                  type="number"
+                                  name="pricing"
+                                  className="form-control"
+                                  placeholder="$000"
+                                />
+                                <ErrorMessage
+                                  name="pricing"
+                                  component="div"
+                                  className="text-danger"
+                                />
+                              </Form.Group>
+                            </Row>
+                            <Row className="mb-3">
+                              <Form.Group as={Col} controlId="duration">
+                                <Form.Label>Plan Duration</Form.Label>
+                                <Field
+                                  // type="string"
+                                  type="number"
+                                  name="duration"
+                                  className="form-control"
+                                  placeholder="Ex. 1 year"
+                                />
+                                <ErrorMessage
+                                  name="duration"
+                                  component="div"
+                                  className="text-danger"
+                                />
+                              </Form.Group>
+                              <Form.Group as={Col} controlId="usageLimit">
+                                <Form.Label>Plan Usage Limits</Form.Label>
+                                <Field
+                                  type="number"
+                                  name="usageLimit"
+                                  className="form-control"
+                                  placeholder="Max 5000 student"
+                                />
+                                <ErrorMessage
+                                  name="usageLimit"
+                                  component="div"
+                                  className="text-danger"
+                                />
+                              </Form.Group>
+                            </Row>
+                            <Row className="mb-3">
+                              <Form.Group as={Col} controlId="features">
+                                <Form.Label>Features</Form.Label>
+                                <Field
+                                  type="text"
+                                  name="features"
+                                  as="textarea"
+                                  rows={3}
+                                  className="form-control"
+                                  placeholder="Ex.
+                               1. Analytics and Insights:Provide data analytics and insights into student and teacher performance.
+                               2.Attendance Tracking: Track and manage student attendance records.
+                               3.Course Management: Create, organize, and manage courses and class schedules."
+                                />
+                                <ErrorMessage
+                                  name="features"
+                                  component="div"
+                                  className="text-danger"
+                                />
+                              </Form.Group>
+                            </Row>
+                            <Row className="mb-3">
+                              <Form.Group as={Col} controlId="billingCycleOption">
+                                <Form.Label>Billing Cycle</Form.Label>
+                                <Field
+                                  as="select"
+                                  name="billingCycle"
+                                  className="form-select"
+                                  aria-label="Billing Cycle"
+                                >
+                                  <option value="">Select</option>
+                                  <option value="monthly">Monthly</option>
+                                  <option value="quarterly">Quarterly</option>
+                                  <option value="semiannually">Semi-Annually</option>
+                                  <option value="annually">Annually</option>
+                                </Field>
+                                <ErrorMessage name="billingCycle" component="div" className="text-danger" />
+                              </Form.Group>
+                            </Row>
+                            <Row className="mb-3">
+                              <Form.Group as={Col} controlId="discountCouponCode">
+                                <Form.Label>Discount/Coupon codes(Optional)</Form.Label>
+                                <Field
+                                  as="select"
+                                  name="discountCouponCode"
+                                  className="form-control"
+                                >
+                                  <option value="">Select a Coupon</option>
+                                  {coupons &&
+                                    coupons.map((item, index) => {
+                                      const formattedDate = moment(item.validFrom || item.validTo).format('MMMM Do YYYY, h:mm:ss a');
+                                      return (
+                                        <option key={item._id} value={index}>
+                                          {item.code} - {item.discountAmount}% - Expires: {formattedDate}
+                                        </option>
+                                      )
+                                    })}
+                                </Field>
+                              </Form.Group>
+                              <Form.Group as={Col} controlId="planVisibility">
+                                <Form.Label>Plan Visibility</Form.Label>
+                                <Field
+                                  as="select"
+                                  name="planVisibility"
+                                  className="form-select"
+                                >
+                                  <option value="private">Private</option>
+                                  <option value="public">Public</option>
+                                </Field>
+                                <ErrorMessage
+                                  name="planVisibility"
+                                  component="div"
+                                  className="text-danger"
+                                />
+                              </Form.Group>
+                            </Row>
+                            <Row className="mb-3">
+                              <Form.Group as={Col} controlId="planActivation">
+                                <Form.Label>Plan Activation</Form.Label>
+                                <Field
+                                  type="text"
+                                  name="planActivation"
+                                  className="form-control"
+                                  placeholder="Plan becomes active after purchase or after 7 days"
+                                />
+                                <ErrorMessage
+                                  name="planActivation"
+                                  component="div"
+                                  className="text-danger"
+                                />
+                              </Form.Group>
+                              <Form.Group as={Col} controlId="planAnalytics">
+                                <Form.Label>Plan Analytics</Form.Label>
+                                <Field
+                                  type="text"
+                                  name="planAnalytics"
+                                  className="form-control"
+                                  placeholder="Ex. No. of users"
+                                />
+                                <ErrorMessage
+                                  name="planAnalytics"
+                                  component="div"
+                                  className="text-danger"
+                                />
+                              </Form.Group>
+                            </Row>
+                            <Row className="mb-3">
+                              <Form.Group as={Col} controlId="planExpiration">
+                                <Form.Label>Plan Expiration</Form.Label>
+                                <Field
+                                  type="number"
+                                  name="planExpiration"
+                                  className="form-control"
+                                  placeholder="01/01/2024"
+                                />
+                                <ErrorMessage
+                                  name="planExpiration"
+                                  component="div"
+                                  className="text-danger"
+                                />
+                              </Form.Group>
+                              <Form.Group as={Col} controlId="trialPeriod">
+                                <Form.Label>Trial Period</Form.Label>
+                                <Field
+                                  type="text"
+                                  // type="number"
+                                  name="trialPeriod"
+                                  className="form-control"
+                                  placeholder="7 Days"
+                                />
+                                <ErrorMessage
+                                  name="trialPeriod"
+                                  component="div"
+                                  className="text-danger"
+                                />
+                              </Form.Group>
+                            </Row>
+                            <Row className="mb-3">
+                              <Form.Group as={Col} controlId="planDescription">
+                                <Form.Label>Plan Description</Form.Label>
+                                <Field
+                                  as="textarea"
+                                  name="planDescription"
+                                  className="form-control" //
+                                  placeholder="Our Pro Plan is perfect for larger educational institutions with advanced needs."
+                                  rows={3}
+                                />
+                                <ErrorMessage
+                                  name="planDescription"
+                                  component="div"
+                                  className="text-danger"
+                                />
+                              </Form.Group>
+                            </Row>
+
+                            {/* payment method */}
+                            <Row className="mb-3">
+                              <Form.Label>Payment Method</Form.Label>
+                              {/* Radio buttons for payment method selection */}
+                              <div className="d-flex">
+                                <div role="group" aria-labelledby="paymentMethod" className="d-flex justify-content-between w-50">
+                                  <label>
+                                    <Field
+                                      type="radio"
+                                      name="paymentGateway"
+                                      value="Credit Card"
+                                      onClick={() => handlePaymentMethodChange("Credit Card")}
+                                    />
+                                    <span className="m-1">
+                                      Credit Card
+                                    </span>
+                                  </label>
+                                  <label>
+                                    <Field
+                                      type="radio"
+                                      name="paymentGateway"
+                                      value="PayPal"
+                                      onClick={() => handlePaymentMethodChange("PayPal")}
+                                    />
+                                    <span className="m-1">PayPal</span>
+                                  </label>
+                                  <label>
+                                    <Field
+                                      type="radio"
+                                      name="paymentGateway"
+                                      value="UPI"
+                                      onClick={() => handlePaymentMethodChange("UPI")}
+                                    />
+                                    <span className="m-1">
+                                      UPI
+                                    </span>
+                                  </label>
+                                  <label>
+                                    <Field
+                                      type="radio"
+                                      name="paymentGateway"
+                                      value="other"
+                                      onClick={() => handlePaymentMethodChange("Other")}
+                                    />
+                                    <span className="m-1">
+                                      Other
+                                    </span>
+                                  </label>
+                                </div>
+                                <ErrorMessage
+                                  name="paymentGateway"
+                                  component="div"
+                                  className="text-danger"
+                                />
+                              </div>
+                            </Row>                           
+                            {selectedPaymentMethod === "Credit Card" && (
+                              <CreditCard />
+                            )}
+                            {selectedPaymentMethod === "PayPal" && (
+                              <PayPal/>
+                            )}
+                            {selectedPaymentMethod === "UPI" && (
+                              <UPI/>
+                            )}
+                            {selectedPaymentMethod === "Other" && (
+                              <OthersPayment/>
+                            )}
+
+                            {/* buttons */}
+                            <Row className="mb-3">
+                              <div className="d-flex justify-content-between">
+                                <Button
+                                  type="button"
+                                  variant="primary"
+                                  className="rounded-pill"
+                                  onClick={OpenModal}
+                                >
+                                  Plan Preview
+                                </Button>
+                                <PlanPreviewModal
+                                  modalOpen={modalOpen}
+                                  Hide={HideModal}
+                                  formData={values}
+                                />
+                                <div className="d-flex">
+                                  <Button
+                                    type="button"
+                                    className="plan_btn me-2 rounded-pill"
+                                    variant="success"
+                                  // onClick={handleSubmit}
+                                  >
+                                    Create Plan
+                                  </Button>
+                                  <Button
+                                    type="button"
+
+                                    className="btn-rounded ms-2 rounded-pill"
+                                    variant="secondary"
+                                    onClick={() => {
+                                      formik.resetForm();
+                                    }}
+                                  >
+                                    Clear/Reset
+                                  </Button>
+                                </div>
+                              </div>
+                            </Row>
+                          </FormikForm>
+                        )}
+                      </Formik>
+                    </Card>
+                  </FormikProvider>
+                  {/* <PayPal
+                    modalOpen={modalOpen}
+                    Hide={hidePayPal}
+                  /> */}
+                </Col>
+              </Row>
+            </Container>
+          </div>
+        </Col>
+      </Row>
+    </Container>
+  );
+};
+
+export default CreatePlan;

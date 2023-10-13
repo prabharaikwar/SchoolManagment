@@ -1,0 +1,20 @@
+.formContainer {
+    height: 100vh;
+    .formRow {   
+      width: 80%;
+      margin: auto;
+      height: 80vh;  
+      .colImg{
+        // width: 50%;      
+        height: 80vh;
+        img {
+          width: 100%;
+        }
+      }
+      .colForm {
+        // width: 50%;
+        height: 80vh;     
+      }
+    }
+  }
+  
